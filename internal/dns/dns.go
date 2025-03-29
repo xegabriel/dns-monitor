@@ -64,9 +64,8 @@ func generateDomainsToCheck(config common.Config) []string {
 		fmt.Sprintf("www.%s", domain),        // www subdomain
 	}
 
-	// Add common DKIM selectors.
-	dkimSelectors := []string{"*", "sig1", "sig2"}
-	for _, selector := range dkimSelectors {
+	// Add custom DKIM selectors.
+	for _, selector := range config.CustomDkimSelectors {
 		domains = append(domains, fmt.Sprintf("%s._domainkey.%s", selector, domain))
 	}
 

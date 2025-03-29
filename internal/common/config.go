@@ -55,19 +55,9 @@ func LoadConfig() (Config, error) {
 		notifyOnErrors = true
 	}
 
-	// Fetch custom domains from the environment variable
-	customDomainsEnv := os.Getenv("CUSTOM_DOMAINS")
-	var validCustomDomains []string
-	if customDomainsEnv != "" {
-		// Split the custom domains by comma and append them to the list
-		customDomains := strings.Split(customDomainsEnv, ",")
-		for _, customDomain := range customDomains {
-			customDomain = strings.TrimSpace(customDomain)
-			if customDomain != "" { // Only add non-empty custom domains
-				validCustomDomains = append(validCustomDomains, customDomain)
-			}
-		}
-	}
+	validCustomSubdomains := getValidEntries("CUSTOM_SUBDOMAINS")
+	validCustomDkimSelectors := getValidEntries("CUSTOM_DKIM_SELECTORS")
+
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -83,15 +73,33 @@ func LoadConfig() (Config, error) {
 	dnsClient := new(dns.Client)
 
 	return Config{
-		Domain:         domain,
-		CustomDomains:  validCustomDomains,
-		DNSServer:      dnsServer,
-		DNSClient:      *dnsClient,
-		CheckInterval:  checkInterval,
-		HTTPClient:     client,
-		PushoverToken:  pushoverToken,
-		PushoverUser:   pushoverUser,
-		NotifyOnErrors: notifyOnErrors,
+		Domain:              domain,
+		CustomDomains:       validCustomSubdomains,
+		CustomDkimSelectors: validCustomDkimSelectors,
+		DNSServer:           dnsServer,
+		DNSClient:           *dnsClient,
+		CheckInterval:       checkInterval,
+		HTTPClient:          client,
+		PushoverToken:       pushoverToken,
+		PushoverUser:        pushoverUser,
+		NotifyOnErrors:      notifyOnErrors,
 	}, nil
 
+}
+
+// getValidEntries fetches and processes a comma-separated environment variable.
+func getValidEntries(envVar string) []string {
+	rawValue := os.Getenv(envVar)
+	if rawValue == "" {
+		return nil
+	}
+
+	var validEntries []string
+	for _, entry := range strings.Split(rawValue, ",") {
+		entry = strings.TrimSpace(entry)
+		if entry != "" {
+			validEntries = append(validEntries, entry)
+		}
+	}
+	return validEntries
 }

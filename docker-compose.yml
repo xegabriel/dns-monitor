@@ -11,7 +11,8 @@ services:
       - DNS_SERVER=${DNS_SERVER}
       - CHECK_INTERVAL=${CHECK_INTERVAL}
       - NOTIFY_ON_ERRORS=${NOTIFY_ON_ERRORS}
-      - CUSTOM_DOMAINS=${CUSTOM_DOMAINS}
+      - CUSTOM_SUBDOMAINS=${CUSTOM_SUBDOMAINS}
+      - CUSTOM_DKIM_SELECTORS=${CUSTOM_DKIM_SELECTORS}
     volumes:
       - ~/code/dns-monitor/data:/app/data:rw
     restart: unless-stopped

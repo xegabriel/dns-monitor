@@ -20,13 +20,14 @@ type DNSRecord struct {
 
 // Configuration struct to hold all settings
 type Config struct {
-	Domain         string
-	CustomDomains  []string
-	DNSServer      string
-	DNSClient      dns.Client
-	CheckInterval  time.Duration
-	HTTPClient     *http.Client
-	PushoverToken  string
-	PushoverUser   string
-	NotifyOnErrors bool
+	Domain              string
+	CustomDomains       []string
+	CustomDkimSelectors []string
+	DNSServer           string
+	DNSClient           dns.Client
+	CheckInterval       time.Duration
+	HTTPClient          *http.Client
+	PushoverToken       string
+	PushoverUser        string
+	NotifyOnErrors      bool
 }
