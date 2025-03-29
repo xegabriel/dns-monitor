@@ -20,7 +20,7 @@ func LoadPreviousState() (common.PreviousState, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Return an empty state with no error
-			log.Println("State file does not exist, returning empty state.")
+			log.Println("ℹ️ State file does not exist, returning empty state. ℹ️")
 			return common.PreviousState{}, nil
 		}
 		log.Printf("Error reading state file: %v", err)
@@ -54,6 +54,8 @@ func SavePreviousState(state common.PreviousState) error {
 		log.Printf("Error writing state file: %v", err)
 		return fmt.Errorf("failed to write state file: %w", err)
 	}
+
+	log.Printf("✅ successfully saved the state ✅")
 
 	return nil
 }

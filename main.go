@@ -76,7 +76,7 @@ func main() {
 // Perform DNS check and handle notifications
 func performCheck(ctx context.Context, config common.Config, prevState *common.PreviousState) {
 
-	log.Println("Checking DNS records...")
+	log.Printf("⏳ Checking DNS records for %s... ⏳", config.Domain)
 	currentRecords, err := dns.FetchDNSRecords(ctx, config)
 	if err != nil {
 		log.Printf("Error fetching DNS records: %v", err)
@@ -102,7 +102,7 @@ func performCheck(ctx context.Context, config common.Config, prevState *common.P
 		// Update in-memory state regardless of storage success
 		*prevState = common.PreviousState{Records: currentRecords}
 	} else {
-		log.Println("No DNS changes detected")
+		log.Println("✅ No DNS changes detected ✅")
 	}
 }
 
@@ -136,7 +136,7 @@ func sendChangeDetectedNotification(ctx context.Context, config common.Config, c
 // Send notification about internal errors
 func sendErrorNotification(ctx context.Context, config common.Config, subject string, err error) {
 
-	message := fmt.Sprintf("DNS Monitor Error: %s\n\nError details: %v\n\nTime: %s",
+	message := fmt.Sprintf("❌ DNS Monitor Error: %s\n\nError details: %v\n\nTime: %s ❌",
 		subject, err, time.Now().Format(time.RFC1123))
 
 	err = notifications.SendPushoverNotification(

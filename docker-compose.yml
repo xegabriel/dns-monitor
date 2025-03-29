@@ -1,0 +1,17 @@
+services:
+  dns-monitor:
+    image: dns-monitor:latest
+    build:
+      context: .
+    container_name: dns-monitor
+    environment:
+      - DOMAIN=${DOMAIN}
+      - PUSHOVER_TOKEN=${PUSHOVER_TOKEN}
+      - PUSHOVER_USER=${PUSHOVER_USER}
+      - DNS_SERVER=${DNS_SERVER}
+      - CHECK_INTERVAL=${CHECK_INTERVAL}
+      - NOTIFY_ON_ERRORS=${NOTIFY_ON_ERRORS}
+      - CUSTOM_DOMAINS=${CUSTOM_DOMAINS}
+    volumes:
+      - ~/code/dns-monitor/data:/app/data:rw
+    restart: unless-stopped
