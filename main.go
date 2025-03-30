@@ -1,18 +1,11 @@
-// Critical DNS records to monitor for security:
-// - MX: Routes emails to iCloud; changes can hijack mail flow.
-// - SPF: Defines authorized senders; unauthorized changes enable spoofing.
-// - DKIM: Cryptographically signs emails; modifications allow forged emails.
-// - DMARC: Enforces email authentication policies; weakening it enables phishing.
-// - A: Monitor extra non-email related record to prevent unintended IP changes.
-// Monitor these records and enable alerts to detect unauthorized modifications.
-
 package main
 
 import (
 	"context"
 	"dns-monitor/internal/common"
 	"dns-monitor/internal/dns"
-	"dns-monitor/internal/notifications"
+	"dns-monitor/internal/notification"
+	"dns-monitor/internal/notification/providers"
 	"dns-monitor/internal/storage"
 	"fmt"
 	"log"
@@ -35,6 +28,12 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	factory := notification.NewFactory(&config.NotificationConfig)
+	notifier, err := factory.CreateNotifier()
+	if err != nil {
+		log.Fatalf("Failed to create notifier: %v", err)
+	}
+
 	// Create a channel for graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -48,7 +47,7 @@ func main() {
 
 		// Optionally notify about the issue
 		if config.NotifyOnErrors {
-			sendErrorNotification(ctx, config, "Failed to load previous state", err)
+			sendErrorNotification(ctx, notifier, "Failed to load previous state", err)
 		}
 	}
 
@@ -57,14 +56,14 @@ func main() {
 	defer ticker.Stop()
 
 	// Run the first check synchronously
-	performCheck(ctx, config, &prevState)
+	performCheck(ctx, notifier, *config, &prevState)
 
 	// Main loop with signal handling
 	for {
 		select {
 		case <-ticker.C:
 			// Perform the check synchronously on each tick
-			performCheck(ctx, config, &prevState)
+			performCheck(ctx, notifier, *config, &prevState)
 
 		case <-stop:
 			log.Println("Received shutdown signal, exiting gracefully")
@@ -74,28 +73,29 @@ func main() {
 }
 
 // Perform DNS check and handle notifications
-func performCheck(ctx context.Context, config common.Config, prevState *common.PreviousState) {
+func performCheck(ctx context.Context, notifier providers.Notifier, config common.Config, prevState *common.PreviousState) {
 
 	log.Printf("⏳ Checking DNS records for %s... ⏳", config.Domain)
 	currentRecords, err := dns.FetchDNSRecords(ctx, config)
 	if err != nil {
 		log.Printf("Error fetching DNS records: %v", err)
 		if config.NotifyOnErrors {
-			sendErrorNotification(ctx, config, "Failed to fetch DNS records", err)
+			sendErrorNotification(ctx, notifier, "Failed to fetch DNS records", err)
 		}
 		return
 	}
 
+	log.Printf("⚖️ Fetched %d DNS records. Comparing them with the previous %d records... ⚖️", len(currentRecords), len(prevState.Records))
 	changes := dns.DetectChanges(prevState.Records, currentRecords)
 	if len(changes) > 0 {
-		sendChangeDetectedNotification(ctx, config, changes)
+		sendChangeDetectedNotification(ctx, notifier, config.Domain, changes)
 
 		// Update stored state after alerting
 		err = storage.SavePreviousState(common.PreviousState{Records: currentRecords}, config.Domain)
 		if err != nil {
 			log.Printf("Failed to save updated state: %v", err)
 			if config.NotifyOnErrors {
-				sendErrorNotification(ctx, config, "Failed to save updated state", err)
+				sendErrorNotification(ctx, notifier, "Failed to save updated state", err)
 			}
 		}
 
@@ -107,10 +107,11 @@ func performCheck(ctx context.Context, config common.Config, prevState *common.P
 }
 
 // Send notification about changes
-func sendChangeDetectedNotification(ctx context.Context, config common.Config, changes []string) {
+func sendChangeDetectedNotification(ctx context.Context, notifier providers.Notifier, domain string, changes []string) {
+
 	var builder strings.Builder
 
-	builder.WriteString(fmt.Sprintf("⚠️ DNS CHANGES DETECTED for %s ⚠️\n\n", config.Domain))
+	builder.WriteString(fmt.Sprintf("⚠️ DNS CHANGES DETECTED for %s ⚠️\n\n", domain))
 
 	for i, change := range changes {
 		builder.WriteString(fmt.Sprintf("%d. %s\n", i+1, change))
@@ -120,31 +121,27 @@ func sendChangeDetectedNotification(ctx context.Context, config common.Config, c
 
 	message := builder.String()
 	log.Println(message)
-	err := notifications.SendPushoverNotification(
-		ctx,
-		config,
-		"DNS Change Alert",
-		message,
-	)
+
+	err := notifier.SendNotification(ctx, "DNS Change Alert", message)
 	if err != nil {
-		log.Printf("Error sending Pushover notification: %v", err)
+		log.Printf("❌ Error sending notification: %v ❌", err)
 	} else {
-		log.Println("Pushover notification sent successfully")
+		log.Println("✅ Notification sent successfully ✅")
 	}
 }
 
 // Send notification about internal errors
-func sendErrorNotification(ctx context.Context, config common.Config, subject string, err error) {
+func sendErrorNotification(ctx context.Context, notifier providers.Notifier, subject string, err error) {
 
 	message := fmt.Sprintf("❌ DNS Monitor Error: %s\n\nError details: %v\n\nTime: %s ❌",
 		subject, err, time.Now().Format(time.RFC1123))
 
-	err = notifications.SendPushoverNotification(
-		ctx,
-		config,
-		"DNS Monitor Error",
-		message,
-	)
+	err = notifier.SendNotification(ctx, "DNS Monitor Error", message)
+	if err != nil {
+		log.Printf("Failed to send error notification: %v", err)
+	} else {
+		log.Println("Error notification sent successfully")
+	}
 
 	if err != nil {
 		log.Printf("Failed to send error notification: %v", err)

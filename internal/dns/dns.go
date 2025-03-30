@@ -1,3 +1,10 @@
+// Critical DNS records to monitor for security:
+// - MX: Routes emails to iCloud; changes can hijack mail flow.
+// - SPF: Defines authorized senders; unauthorized changes enable spoofing.
+// - DKIM: Cryptographically signs emails; modifications allow forged emails.
+// - DMARC: Enforces email authentication policies; weakening it enables phishing.
+// Monitor these records and enable alerts to detect unauthorized modifications.
+
 package dns
 
 import (
@@ -26,7 +33,6 @@ func FetchDNSRecords(ctx context.Context, config common.Config) ([]common.DNSRec
 		dns.TypeMX,    // Mail exchange records.
 		dns.TypeTXT,   // Text records (SPF, DKIM, DMARC).
 		dns.TypeCNAME, // CNAME records (could be used for mail subdomains).
-		dns.TypeA,
 	}
 
 	// Generate the list of domains to check.

@@ -6,27 +6,37 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/miekg/dns"
 )
 
+const (
+
+	// Pushover config
+	PushoverUserKeyEnv  = "PUSHOVER_USER_KEY"
+	PushoverAppTokenEnv = "PUSHOVER_APP_TOKEN"
+
+	// Telegram config
+	TelegramBotTokenEnv = "TELEGRAM_BOT_TOKEN"
+	TelegramChatIDsEnv  = "TELEGRAM_CHAT_IDS" // Comma-separated list of chat IDs
+
+	// Add more environment variables for other providers as needed
+
+)
+
 // Load configuration from environment variables with validation
-func LoadConfig() (Config, error) {
+func LoadConfig() (*Config, error) {
 	domain := os.Getenv("DOMAIN")
 	if domain == "" {
-		return Config{}, errors.New("DOMAIN environment variable is required (e.g., test.ro)")
+		return &Config{}, errors.New("DOMAIN environment variable is required (e.g., test.ro)")
 	}
 
-	pushoverToken := os.Getenv("PUSHOVER_TOKEN")
-	if pushoverToken == "" {
-		return Config{}, errors.New("PUSHOVER_TOKEN environment variable is required")
-	}
-
-	pushoverUser := os.Getenv("PUSHOVER_USER")
-	if pushoverUser == "" {
-		return Config{}, errors.New("PUSHOVER_USER environment variable is required")
+	notificationConfig, err := loadNotificationConfig()
+	if err != nil {
+		return &Config{}, fmt.Errorf("failed to load notification config: %v", err)
 	}
 
 	// DNS server with default
@@ -41,10 +51,10 @@ func LoadConfig() (Config, error) {
 	if intervalStr != "" {
 		duration, err := time.ParseDuration(intervalStr)
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid CHECK_INTERVAL format: %v", err)
+			return &Config{}, fmt.Errorf("invalid CHECK_INTERVAL format: %v", err)
 		}
 		if duration < 1*time.Minute {
-			log.Println("Warning: CHECK_INTERVAL less than 1 minute may cause excessive API calls")
+			log.Println("⚠️ Warning: CHECK_INTERVAL less than 1 minute may cause excessive API calls ⚠️")
 		}
 		checkInterval = duration
 	}
@@ -55,8 +65,8 @@ func LoadConfig() (Config, error) {
 		notifyOnErrors = true
 	}
 
-	validCustomSubdomains := getValidEntries("CUSTOM_SUBDOMAINS")
-	validCustomDkimSelectors := getValidEntries("CUSTOM_DKIM_SELECTORS")
+	validCustomSubdomains := getValidEntries("CUSTOM_SUBDOMAINS", parseString)
+	validCustomDkimSelectors := getValidEntries("CUSTOM_DKIM_SELECTORS", parseString)
 
 	// Create HTTP client with timeout
 	client := &http.Client{
@@ -72,7 +82,7 @@ func LoadConfig() (Config, error) {
 	// Create DNS Client
 	dnsClient := new(dns.Client)
 
-	return Config{
+	return &Config{
 		Domain:              domain,
 		CustomDomains:       validCustomSubdomains,
 		CustomDkimSelectors: validCustomDkimSelectors,
@@ -80,26 +90,86 @@ func LoadConfig() (Config, error) {
 		DNSClient:           *dnsClient,
 		CheckInterval:       checkInterval,
 		HTTPClient:          client,
-		PushoverToken:       pushoverToken,
-		PushoverUser:        pushoverUser,
+		NotificationConfig:  *notificationConfig,
 		NotifyOnErrors:      notifyOnErrors,
 	}, nil
 
 }
 
-// getValidEntries fetches and processes a comma-separated environment variable.
-func getValidEntries(envVar string) []string {
-	rawValue := os.Getenv(envVar)
-	if rawValue == "" {
-		return nil
+// NotificationConfig holds the configuration for notification services
+func loadNotificationConfig() (*NotificationConfig, error) {
+	notifierType := os.Getenv("NOTIFIER_TYPE")
+	if !IsValidNotifierType(notifierType) {
+		return &NotificationConfig{}, errors.New("NOTIFIER_TYPE environment variable is required")
+	}
+	config := NotificationConfig{
+		NotifierType: notifierType,
+	}
+	switch notifierType {
+	case NotifierTypePushover:
+		config.PushoverToken = os.Getenv(PushoverAppTokenEnv)
+		config.PushoverUser = os.Getenv(PushoverUserKeyEnv)
+		if config.PushoverToken == "" || config.PushoverUser == "" {
+			return nil, fmt.Errorf("%s and %s environment variable are required", PushoverAppTokenEnv, PushoverUserKeyEnv)
+		}
+	case NotifierTypeTelegram:
+		config.TelegramBotToken = os.Getenv(TelegramBotTokenEnv)
+		config.TelegramChatIDs = getValidEntries(TelegramChatIDsEnv, parseInt64)
+		if config.TelegramBotToken == "" || len(config.TelegramChatIDs) == 0 {
+			return nil, fmt.Errorf("%s and %s environment variable are required", TelegramBotTokenEnv, TelegramChatIDsEnv)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported notifier type: %s", notifierType)
 	}
 
-	var validEntries []string
-	for _, entry := range strings.Split(rawValue, ",") {
-		entry = strings.TrimSpace(entry)
-		if entry != "" {
-			validEntries = append(validEntries, entry)
+	return &config, nil
+}
+
+// IsValidNotifierType checks if the provided notifier type is valid.
+func IsValidNotifierType(input string) bool {
+	if input == "" {
+		return false
+	}
+	for _, nt := range NotifierTypes {
+		if input == nt {
+			return true
 		}
 	}
+	return false
+}
+
+// getValidEntries fetches and processes a comma-separated environment variable.
+func getValidEntries[T comparable](envVar string, parseFunc func(string) (T, error)) []T {
+	rawValue := os.Getenv(envVar)
+	if rawValue == "" {
+		return []T{}
+	}
+
+	entries := strings.FieldsFunc(rawValue, func(r rune) bool {
+		return r == ','
+	})
+
+	validEntries := make([]T, 0, len(entries))
+	for _, entry := range entries {
+		trimmed := strings.TrimSpace(entry)
+		if trimmed == "" {
+			continue
+		}
+
+		parsedValue, err := parseFunc(trimmed)
+		if err == nil {
+			validEntries = append(validEntries, parsedValue)
+		}
+	}
+
 	return validEntries
+}
+
+// Helper functions for parsing
+func parseString(value string) (string, error) {
+	return value, nil
+}
+
+func parseInt64(value string) (int64, error) {
+	return strconv.ParseInt(value, 10, 64)
 }
