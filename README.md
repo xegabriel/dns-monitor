@@ -151,4 +151,12 @@ By following these steps, you can seamlessly integrate new notification services
 
 ---
 
+## 📜 Disclaimer
+The authors of this library bear no responsibility for any misuse or unintended consequences arising from its use. Users assume full liability for their actions. For more details, refer to the [LICENSE](https://github.com/xegabriel/dns-monitor/blob/main/LICENSE).
+
+---
+
+## ⭐ Support
+If you find this project helpful, please consider giving it a ⭐️ on GitHub!
+
 Enjoy monitoring your DNS! 🚀
