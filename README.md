@@ -22,7 +22,7 @@ Enable alerts to detect unauthorized modifications and maintain secure email com
 
 ### Running the Application 
 
-#### **2️⃣ Run with Environment Variables**
+#### **1️⃣ Run with Environment Variables**
 ```bash
 # Pushover example
 docker run -d --name dns-monitor \
@@ -38,11 +38,15 @@ docker run -d --name dns-monitor \
   -e TELEGRAM_BOT_TOKEN="your-bot-token" \
   -e TELEGRAM_CHAT_IDS="your-chat-id" \
   1gabriel/dns-monitor:latest
+
+docker logs dns-monitor
 ```
 
-#### **3️⃣ Run with Docker Compose**
+#### **2️⃣ Run with Docker Compose**
 ```bash
+# Run by Pulling the Remote Image
 docker-compose up -d
+docker logs dns-monitor
 ```
 
 ### Development Mode
@@ -51,6 +55,7 @@ To start the **DNS Monitor**, use:
 ```bash
 git clone git@github.com:xegabriel/dns-monitor.git
 cd dns-monitor
+# Run by Building Local Files
 docker-compose up --build -d
 # To view logs in real-time:
 docker logs -f dns-monitor
@@ -140,14 +145,6 @@ To add a new notification service, follow these steps:
 6. **Update this README**: Document the new notifier under the **Configuration Parameters** section.  
 
 By following these steps, you can seamlessly integrate new notification services into **DNS Monitor**. 🚀  
-
----
-
-### 🎯 **Why Use DNS Monitor?**  
-✅ **Lightweight** – Runs efficiently with minimal resources.  
-✅ **Flexible** – Can monitor any email domain or general DNS records.  
-✅ **Notifications** – Get instant alerts via **Pushover** or **Telegram** when changes are detected.  
-✅ **Customizable** – Configure the DNS server, check interval, and more to fit your needs! 
 
 ---
 
