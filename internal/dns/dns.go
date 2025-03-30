@@ -43,7 +43,7 @@ func FetchDNSRecords(ctx context.Context, config common.Config) ([]common.DNSRec
 		for _, recordType := range recordTypes {
 			r, err := queryDNS(ctx, domainName, recordType, config)
 			if err != nil {
-				log.Printf("Error querying %s for %s: %v", domainName, dns.TypeToString[recordType], err)
+				log.Printf("❌ Error querying %s for %s: %v ❌", domainName, dns.TypeToString[recordType], err)
 				continue
 			}
 			if r.Rcode != dns.RcodeSuccess {
@@ -70,15 +70,31 @@ func generateDomainsToCheck(config common.Config) []string {
 		fmt.Sprintf("www.%s", domain),        // www subdomain
 	}
 
-	// Add custom DKIM selectors.
+	// Add custom DKIM selectors (https://github.com/xegabriel/dns-monitor?tab=readme-ov-file#dkim-selectors)
 	for _, selector := range config.CustomDkimSelectors {
 		domains = append(domains, fmt.Sprintf("%s._domainkey.%s", selector, domain))
 	}
 
 	// Add any custom domains that were provided at runtime
-	domains = append(domains, config.CustomDomains...)
+	for _, subdomain := range config.CustomSubdomains {
+		domains = append(domains, fmt.Sprintf("%s.%s", subdomain, domain))
+	}
+	domains = append(domains, config.CustomSubdomains...)
 
-	return domains
+	return deduplicate(domains)
+}
+
+// deduplicate removes duplicate entries from a slice of strings.
+func deduplicate(input []string) []string {
+	seen := make(map[string]struct{})
+	var result []string
+	for _, item := range input {
+		if _, ok := seen[item]; !ok {
+			seen[item] = struct{}{}
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 // queryDNS sends a DNS query for the given domain name and record type, with exponential backoff retries.

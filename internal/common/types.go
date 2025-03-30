@@ -21,7 +21,7 @@ type DNSRecord struct {
 // Configuration struct to hold all settings
 type Config struct {
 	Domain              string
-	CustomDomains       []string
+	CustomSubdomains    []string
 	CustomDkimSelectors []string
 	DNSServer           string
 	DNSClient           dns.Client

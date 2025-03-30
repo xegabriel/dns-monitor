@@ -84,7 +84,7 @@ func LoadConfig() (*Config, error) {
 
 	return &Config{
 		Domain:              domain,
-		CustomDomains:       validCustomSubdomains,
+		CustomSubdomains:    validCustomSubdomains,
 		CustomDkimSelectors: validCustomDkimSelectors,
 		DNSServer:           dnsServer,
 		DNSClient:           *dnsClient,
