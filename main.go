@@ -40,7 +40,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	// Load previous state
-	prevState, err := storage.LoadPreviousState()
+	prevState, err := storage.LoadPreviousState(config.Domain)
 	if err != nil {
 		log.Printf("Warning: Could not load previous state: %v", err)
 		// Continue with empty state instead of failing
@@ -91,7 +91,7 @@ func performCheck(ctx context.Context, config common.Config, prevState *common.P
 		sendChangeDetectedNotification(ctx, config, changes)
 
 		// Update stored state after alerting
-		err = storage.SavePreviousState(common.PreviousState{Records: currentRecords})
+		err = storage.SavePreviousState(common.PreviousState{Records: currentRecords}, config.Domain)
 		if err != nil {
 			log.Printf("Failed to save updated state: %v", err)
 			if config.NotifyOnErrors {

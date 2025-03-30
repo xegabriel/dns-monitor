@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-func LoadPreviousState() (common.PreviousState, error) {
-	stateFile, err := getStateFileLocation()
+func LoadPreviousState(domain string) (common.PreviousState, error) {
+	stateFile, err := getStateFileLocation(domain)
 	if err != nil {
 		log.Printf("Error retrieving the state file path: %v", err)
 		return common.PreviousState{}, fmt.Errorf("failed to retrieve the state file path: %w", err)
@@ -36,14 +36,14 @@ func LoadPreviousState() (common.PreviousState, error) {
 	return state, nil
 }
 
-func SavePreviousState(state common.PreviousState) error {
+func SavePreviousState(state common.PreviousState, domain string) error {
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		log.Printf("Error serializing state: %v", err)
 		return fmt.Errorf("failed to serialize state: %w", err)
 	}
 
-	stateFile, err := getStateFileLocation()
+	stateFile, err := getStateFileLocation(domain)
 	if err != nil {
 		log.Printf("Error retrieving the state file path: %v", err)
 		return fmt.Errorf("failed to retrieve the state file path: %w", err)
@@ -60,8 +60,8 @@ func SavePreviousState(state common.PreviousState) error {
 	return nil
 }
 
-func getStateFileLocation() (string, error) {
-	const fileName = "/dns_state.json"
+func getStateFileLocation(domain string) (string, error) {
+	fileName := fmt.Sprintf("/%s_dns_state.json", domain)
 	workingDir, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error getting working directory: %v", err)

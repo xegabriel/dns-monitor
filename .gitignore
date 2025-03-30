@@ -28,5 +28,5 @@ go.work.sum
 .vscode
 
 # DNS Monitor
-dns_state.json
+*dns_state.json
 dns-monitor
