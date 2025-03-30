@@ -1,7 +1,22 @@
-# DNS Monitor
+# DNS Monitor – Real-Time DNS Change Detection & Email Security
 
-**DNS Monitor** is a lightweight Go application that checks for DNS changes related to emails.  
-It has been tested and configured specifically for **iCloud emails**, but it can be used for **any email provider**.
+**DNS Monitor** is a lightweight and customizable **DNS change detection tool** designed to enhance **email security** and prevent unauthorized modifications to critical **DNS records** like **MX, SPF, DKIM, and DMARC**. It provides instant notifications via **Pushover** and **Telegram**, ensuring you stay informed of potential threats. While it was specifically tested and configured for **iCloud emails**, it can be used for **any email provider** or **general DNS monitoring**.
+
+✅ **Monitor DNS changes in real-time**  
+✅ **Protect against email hijacking, spoofing, and phishing**  
+✅ **Get instant alerts when records are modified**  
+✅ **Flexible & customizable for any domain**
+
+## Why Monitor DNS Records?  
+Email security relies on key DNS records to prevent hijacking, spoofing, and phishing. Unauthorized modifications can compromise your email integrity. **DNS Monitor** helps you detect and respond to such changes in real time by tracking:  
+
+- **MX (Mail Exchange):** Controls email routing; changes can hijack mail flow.  
+- **SPF (Sender Policy Framework):** Defines authorized email senders; unauthorized changes allow spoofing.  
+- **DKIM (DomainKeys Identified Mail):** Cryptographically signs emails; modifications enable forged emails.  
+- **DMARC (Domain-based Message Authentication, Reporting, and Conformance):** Enforces email authentication policies; weakening it allows phishing attempts.  
+
+Enable alerts to detect unauthorized modifications and maintain secure email communication.  
+
 
 ## 🚀 Getting Started
 
@@ -19,18 +34,24 @@ docker-compose down
 
 ## ⚙️ Configuration Parameters
 
-You can configure the application using **environment variables** before running it.
+| Variable                | Description                                           | Required | Default Value              |
+|-------------------------|-------------------------------------------------------|----------|----------------------------|
+| `DOMAIN`               | The domain to monitor for DNS changes                 | ✅ Yes  | _None_                      |
+| `NOTIFIER_TYPE`        | Notification method (`pushover` or `telegram`)        | ✅ Yes  | _None_                      |
+| `PUSHOVER_APP_TOKEN`   | Pushover application token (Required if using Pushover)  | ✅* Yes | _None_                      |
+| `PUSHOVER_USER_KEY`    | Pushover user key (Required if using Pushover)        | ✅* Yes | _None_                      |
+| `TELEGRAM_BOT_TOKEN`   | Telegram bot token (Required if using Telegram)       | ✅* Yes | _None_                      |
+| `TELEGRAM_CHAT_IDS`    | Comma-separated list of Telegram chat IDs (Required if using Telegram) | ✅* Yes | _None_  |
+| `DNS_SERVER`           | The DNS server to use for queries                     | ❌ No   | `1.1.1.1:53` (Cloudflare)   |
+| `CHECK_INTERVAL`       | Frequency of DNS checks (`1m`, `10m`, `1h`)           | ❌ No   | `1h`                         |
+| `NOTIFY_ON_ERRORS`     | Send notifications for application errors             | ❌ No   | `false`                      |
+| `CUSTOM_SUBDOMAINS`    | Additional subdomains to monitor (comma-separated)    | ❌ No   | _Empty_                      |
+| `CUSTOM_DKIM_SELECTORS`| Additional DKIM selectors to monitor (comma-separated). Check the `DKIM Selectors` section for examples | ❌ No   | _Empty_                      |
 
-| Variable            | Description                                  | Required | Default Value             |
-|---------------------|----------------------------------------------|----------|---------------------------|
-| `DOMAIN`           | The domain to monitor for DNS changes        | ✅ Yes  | _None_                     |
-| `PUSHOVER_TOKEN`   | Your Pushover application token              | ✅ Yes  | _None_                     |
-| `PUSHOVER_USER`    | Your Pushover user key                       | ✅ Yes  | _None_                     |
-| `DNS_SERVER`       | The DNS server to use for queries            | ❌ No   | `1.1.1.1:53` (Cloudflare)  |
-| `CHECK_INTERVAL`   | Frequency of DNS checks (`1m`, `10m`, `1h`)  | ❌ No   | `1h`                        |
-| `NOTIFY_ON_ERRORS` | Send notifications for application errors    | ❌ No   | `false`                     |
-| `CUSTOM_SUBDOMAINS`   | Additional subdomains to monitor (comma-separated) | ❌ No   | _Empty_                     |
-| `CUSTOM_DKIM_SELECTORS`   | Additional DKIM selectors to monitor (comma-separated) | ❌ No   | _Empty_                     |
+> **Note:**  
+> - `PUSHOVER_APP_TOKEN` and `PUSHOVER_USER_KEY` are required **only if** `NOTIFIER_TYPE=pushover`.  
+> - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_IDS` are required **only if** `NOTIFIER_TYPE=telegram`.  
+> - Only one notifier type can be used at a time.  
 
 ### DKIM Selectors
 
@@ -52,18 +73,42 @@ You can configure the application using **environment variables** before running
 ### Monitoring DKIM:
 It’s a good idea to monitor your DKIM records for any unexpected changes, as altering these can affect email authenticity, security, and deliverability. Unauthorized changes to DKIM selectors could indicate a **compromise** or a misconfiguration in your email system. Regular audits can help identify potential vulnerabilities.
 
+## 🔔 Notification Integration  
+
+**DNS Monitor** uses [`nikoksr/notify`](https://github.com/nikoksr/notify) to integrate multiple notification services. This makes it easy to extend support for additional services as needed.  
+
+### Supported Notification Services  
+
+At this moment, **DNS Monitor** supports the following notification services:  
+- **Pushover**  
+- **Telegram**  
+
+### Adding a New Notification Service  
+
+To add a new notification service, follow these steps:  
+
+1. **Add a new provider**: Implement the provider in [`internal/notification/providers`](https://github.com/xegabriel/dns-monitor/tree/main/internal/notification/providers).  
+2. **Register the provider in the factory**: Modify [`factory.go`](https://github.com/xegabriel/dns-monitor/blob/main/internal/notification/factory.go#L23) to include the new provider.  
+3. **Update allowed notifier types**: Add the new notifier type in [`types.go`](https://github.com/xegabriel/dns-monitor/blob/main/internal/common/types.go#L45).  
+4. **Load the required environment variables**: Modify [`config.go`](https://github.com/xegabriel/dns-monitor/blob/main/internal/common/config.go#L104) to support the new service's configuration.  
+5. **Update the Docker Compose file**: Add necessary environment variables in [`docker-compose.yml`](https://github.com/xegabriel/dns-monitor/blob/main/docker-compose.yml).  
+6. **Update this README**: Document the new notifier under the **Configuration Parameters** section.  
+
+By following these steps, you can seamlessly integrate new notification services into **DNS Monitor**. 🚀  
+
 
 ### Example Configuration
 Before starting the application, export the required variables:
 
 ```bash
 export DOMAIN="example.com"
-export PUSHOVER_TOKEN="your_pushover_app_token"
-export PUSHOVER_USER="your_pushover_user_key"
+export NOTIFIER_TYPE="pushover"
+export PUSHOVER_APP_TOKEN="your_pushover_app_token"
+export PUSHOVER_USER_KEY="your_pushover_user_key"
 export DNS_SERVER="8.8.8.8:53"
 export CHECK_INTERVAL="5m"
 export NOTIFY_ON_ERRORS="true"
-export CUSTOM_SUBDOMAINS="sub1.example.com,sub2.example.com"
+export CUSTOM_SUBDOMAINS="sub1,sub2"
 export CUSTOM_DKIM_SELECTORS="*,sig1"
 ```
 
@@ -75,11 +120,11 @@ docker-compose up --build -d
 
 ---
 
-### 🎯 Why Use DNS Monitor?
+### 🎯 **Why Use DNS Monitor?**  
 ✅ **Lightweight** – Runs efficiently with minimal resources.  
-✅ **Flexible** – Can monitor any email domain.  
-✅ **Notifications** – Get instant alerts via **Pushover** if changes are detected.  
-✅ **Customizable** – Choose the DNS server, check interval, and more!  
+✅ **Flexible** – Can monitor any email domain or general DNS records.  
+✅ **Notifications** – Get instant alerts via **Pushover** or **Telegram** when changes are detected.  
+✅ **Customizable** – Configure the DNS server, check interval, and more to fit your needs! 
 
 ---
 

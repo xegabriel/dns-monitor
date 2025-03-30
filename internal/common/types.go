@@ -45,15 +45,11 @@ type NotificationConfig struct {
 const (
 	NotifierTypePushover = "pushover"
 	NotifierTypeTelegram = "telegram"
-	NotifierTypeSlack    = "slack"
-	NotifierTypeEmail    = "email"
 	// Add more notifier types as needed
 )
 
 var NotifierTypes = []string{
 	NotifierTypePushover,
 	NotifierTypeTelegram,
-	NotifierTypeSlack,
-	NotifierTypeEmail,
 	// Add more notifier types as needed
 }
