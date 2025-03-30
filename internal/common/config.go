@@ -103,8 +103,10 @@ func LoadConfig() (*Config, error) {
 // NotificationConfig holds the configuration for notification services
 func loadNotificationConfig() (*NotificationConfig, error) {
 	notifierType := os.Getenv("NOTIFIER_TYPE")
-	if !IsValidNotifierType(notifierType) {
+	if notifierType == "" {
 		return &NotificationConfig{}, errors.New("NOTIFIER_TYPE environment variable is required")
+	} else if !isValidNotifierType(notifierType) {
+		return &NotificationConfig{}, fmt.Errorf("unsupported notifier type: %s", notifierType)
 	}
 	config := NotificationConfig{
 		NotifierType: notifierType,
@@ -129,11 +131,8 @@ func loadNotificationConfig() (*NotificationConfig, error) {
 	return &config, nil
 }
 
-// IsValidNotifierType checks if the provided notifier type is valid.
-func IsValidNotifierType(input string) bool {
-	if input == "" {
-		return false
-	}
+// isValidNotifierType checks if the provided notifier type is valid.
+func isValidNotifierType(input string) bool {
 	for _, nt := range NotifierTypes {
 		if input == nt {
 			return true

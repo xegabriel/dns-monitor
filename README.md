@@ -65,6 +65,9 @@ docker-compose down
 
 # Without docker
 go run cmd/main.go
+
+# Run the tests
+go test ./...
 ```
 
 ## ⚙️ Configuration Parameters
