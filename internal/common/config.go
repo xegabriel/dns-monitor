@@ -64,9 +64,13 @@ func LoadConfig() (*Config, error) {
 	if os.Getenv("NOTIFY_ON_ERRORS") == "true" {
 		notifyOnErrors = true
 	}
+	log.Printf("🔔 Notify on errors: %v 🔔", notifyOnErrors)
 
 	validCustomSubdomains := getValidEntries("CUSTOM_SUBDOMAINS", parseString)
+	log.Printf("🌐 Custom subdomains: %v 🌐", validCustomSubdomains)
+
 	validCustomDkimSelectors := getValidEntries("CUSTOM_DKIM_SELECTORS", parseString)
+	log.Printf("🛡️ Custom DKIM selectors: %v 🛡️", validCustomDkimSelectors)
 
 	// Create HTTP client with timeout
 	client := &http.Client{

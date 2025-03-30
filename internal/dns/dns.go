@@ -79,7 +79,6 @@ func generateDomainsToCheck(config common.Config) []string {
 	for _, subdomain := range config.CustomSubdomains {
 		domains = append(domains, fmt.Sprintf("%s.%s", subdomain, domain))
 	}
-	domains = append(domains, config.CustomSubdomains...)
 
 	return deduplicate(domains)
 }
@@ -112,7 +111,7 @@ func queryDNS(ctx context.Context, domainName string, recordType uint16, config 
 			return fmt.Errorf("DNS query failed: %w", err)
 		}
 		if resp.Rcode != dns.RcodeSuccess {
-			return fmt.Errorf("DNS query returned non-success response: %d", resp.Rcode)
+			return fmt.Errorf("DNS query returned non-success response: %d for %s", resp.Rcode, domainName)
 		}
 		return nil
 	}

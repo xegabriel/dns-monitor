@@ -33,6 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create notifier: %v", err)
 	}
+	log.Printf("🔔 Notifier %s created successfully 🔔", config.NotificationConfig.NotifierType)
 
 	// Create a channel for graceful shutdown
 	stop := make(chan os.Signal, 1)
@@ -75,7 +76,7 @@ func main() {
 // Perform DNS check and handle notifications
 func performCheck(ctx context.Context, notifier providers.Notifier, config common.Config, prevState *common.PreviousState) {
 
-	log.Printf("⏳ Checking DNS records for %s... ⏳", config.Domain)
+	log.Printf("⏳ Checking DNS records for %s every %s ... ⏳", config.Domain, config.CheckInterval)
 	currentRecords, err := dns.FetchDNSRecords(ctx, config)
 	if err != nil {
 		log.Printf("Error fetching DNS records: %v", err)

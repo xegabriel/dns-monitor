@@ -55,7 +55,7 @@ func SavePreviousState(state common.PreviousState, domain string) error {
 		return fmt.Errorf("failed to write state file: %w", err)
 	}
 
-	log.Printf("✅ successfully saved the state ✅")
+	log.Printf("✅ Successfully saved the state ✅")
 
 	return nil
 }
