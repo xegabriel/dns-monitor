@@ -20,16 +20,53 @@ Enable alerts to detect unauthorized modifications and maintain secure email com
 
 ## 🚀 Getting Started
 
-### Running the Application
+### Running the Application 
+
+#### **1️⃣ Basic Run Command**
+Run the Docker image with the following command:
+```bash
+# If you have the env vars already set
+docker run -d --name dns-monitor 1gabriel/dns-monitor:latest
+```
+
+#### **2️⃣ Run with Environment Variables**
+```bash
+# Pushover example
+docker run -d --name dns-monitor \
+  -e DOMAIN="example.com" \
+  -e NOTIFIER_TYPE="pushover" \
+  -e PUSHOVER_APP_TOKEN="your-token" \
+  -e PUSHOVER_USER_KEY="your-user-key" \
+  1gabriel/dns-monitor:latest
+# Telegram example
+docker run -d --name dns-monitor \
+  -e DOMAIN="example.com" \
+  -e NOTIFIER_TYPE="telegram" \
+  -e TELEGRAM_BOT_TOKEN="your-bot-token" \
+  -e TELEGRAM_CHAT_IDS="your-chat-id" \
+  1gabriel/dns-monitor:latest
+```
+
+#### **3️⃣ Run with Docker Compose**
+```bash
+docker-compose up -d
+```
+
+### Development Mode
 To start the **DNS Monitor**, use:
 
 ```bash
+git clone git@github.com:xegabriel/dns-monitor.git
+cd dns-monitor
 docker-compose up --build -d
 # To view logs in real-time:
 docker logs -f dns-monitor
 
 # To stop and remove the container:
 docker-compose down
+
+# Without docker
+go run main.go
 ```
 
 ## ⚙️ Configuration Parameters
@@ -73,6 +110,21 @@ docker-compose down
 ### Monitoring DKIM:
 It’s a good idea to monitor your DKIM records for any unexpected changes, as altering these can affect email authenticity, security, and deliverability. Unauthorized changes to DKIM selectors could indicate a **compromise** or a misconfiguration in your email system. Regular audits can help identify potential vulnerabilities.
 
+### Example Configuration
+Before starting the application, export the required variables:
+
+```bash
+export DOMAIN="example.com"
+export NOTIFIER_TYPE="pushover"
+export PUSHOVER_APP_TOKEN="your_pushover_app_token"
+export PUSHOVER_USER_KEY="your_pushover_user_key"
+export DNS_SERVER="8.8.8.8:53"
+export CHECK_INTERVAL="5m"
+export NOTIFY_ON_ERRORS="true"
+export CUSTOM_SUBDOMAINS="sub1,sub2"
+export CUSTOM_DKIM_SELECTORS="*,sig1"
+```
+
 ## 🔔 Notification Integration  
 
 **DNS Monitor** uses [`nikoksr/notify`](https://github.com/nikoksr/notify) to integrate multiple notification services. This makes it easy to extend support for additional services as needed.  
@@ -95,28 +147,6 @@ To add a new notification service, follow these steps:
 6. **Update this README**: Document the new notifier under the **Configuration Parameters** section.  
 
 By following these steps, you can seamlessly integrate new notification services into **DNS Monitor**. 🚀  
-
-
-### Example Configuration
-Before starting the application, export the required variables:
-
-```bash
-export DOMAIN="example.com"
-export NOTIFIER_TYPE="pushover"
-export PUSHOVER_APP_TOKEN="your_pushover_app_token"
-export PUSHOVER_USER_KEY="your_pushover_user_key"
-export DNS_SERVER="8.8.8.8:53"
-export CHECK_INTERVAL="5m"
-export NOTIFY_ON_ERRORS="true"
-export CUSTOM_SUBDOMAINS="sub1,sub2"
-export CUSTOM_DKIM_SELECTORS="*,sig1"
-```
-
-Then run:
-
-```bash
-docker-compose up --build -d
-```
 
 ---
 
