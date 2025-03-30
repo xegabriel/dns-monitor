@@ -66,7 +66,7 @@ docker logs -f dns-monitor
 docker-compose down
 
 # Without docker
-go run main.go
+go run cmd/main.go
 ```
 
 ## ⚙️ Configuration Parameters

@@ -1,7 +1,7 @@
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 COPY . .
-RUN go build -o dns-monitor .
+RUN go build -o dns-monitor ./cmd
 
 
 FROM alpine:latest
