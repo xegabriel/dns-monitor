@@ -22,13 +22,6 @@ Enable alerts to detect unauthorized modifications and maintain secure email com
 
 ### Running the Application 
 
-#### **1️⃣ Basic Run Command**
-Run the Docker image with the following command:
-```bash
-# If you have the env vars already set
-docker run -d --name dns-monitor 1gabriel/dns-monitor:latest
-```
-
 #### **2️⃣ Run with Environment Variables**
 ```bash
 # Pushover example
