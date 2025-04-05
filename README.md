@@ -1,4 +1,5 @@
 # DNS Monitor – Real-Time DNS Change Detection & Email Security
+[![License: MIT](https://img.shields.io/github/license/xegabriel/dns-monitor)](https://github.com/xegabriel/dns-monitor/blob/main/LICENSE) [![Latest Release](https://img.shields.io/github/v/release/xegabriel/dns-monitor)](https://github.com/xegabriel/dns-monitor/releases/latest) [![GitHub Stars](https://img.shields.io/github/stars/xegabriel/dns-monitor?style=social)](https://github.com/xegabriel/dns-monitor)
 
 **DNS Monitor** is a lightweight and customizable **DNS change detection tool** designed to enhance **email security** and prevent unauthorized modifications to critical **DNS records** like **MX, SPF, DKIM, and DMARC**. It provides instant notifications via **Pushover** and **Telegram**, ensuring you stay informed of potential threats. While it was specifically tested and configured for **iCloud emails**, it can be used for **any email provider** or **general DNS monitoring**.
 
