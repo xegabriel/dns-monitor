@@ -1,6 +1,6 @@
 services:
   dns-monitor:
-    image: 1gabriel/dns-monitor:latest
+    image: ghcr.io/xegabriel/dns-monitor:latest
     build:
       context: .
     container_name: dns-monitor

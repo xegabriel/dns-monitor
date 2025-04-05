@@ -31,14 +31,14 @@ docker run -d --name dns-monitor \
   -e NOTIFIER_TYPE="pushover" \
   -e PUSHOVER_APP_TOKEN="your-token" \
   -e PUSHOVER_USER_KEY="your-user-key" \
-  1gabriel/dns-monitor:latest
+  ghcr.io/xegabriel/dns-monitor:latest
 # Telegram example
 docker run -d --name dns-monitor \
   -e DOMAIN="example.com" \
   -e NOTIFIER_TYPE="telegram" \
   -e TELEGRAM_BOT_TOKEN="your-bot-token" \
   -e TELEGRAM_CHAT_IDS="your-chat-id" \
-  1gabriel/dns-monitor:latest
+  ghcr.io/xegabriel/dns-monitor:latest
 
 docker logs dns-monitor
 ```
