@@ -78,28 +78,12 @@ else
 fi
 git push origin "$NEW_TAG" || { echo "❌ Failed to push Git tag '$NEW_TAG'. It might already exist remotely or another issue occurred."; exit 1; }
 
-# --- Docker Build and Tag for GHCR ---
-echo "🐳 Building Docker image for GHCR..."
-# Build using the versioned tag directly
-docker build -t "$GHCR_IMAGE_TAGGED" . || { echo "❌ Failed to build Docker image."; exit 1; }
-
-echo "🏷️ Tagging image as 'latest' for GHCR..."
-docker tag "$GHCR_IMAGE_TAGGED" "$GHCR_IMAGE_LATEST" || { echo "❌ Failed to tag image as latest."; exit 1; }
-
-# --- Log in to GitHub Container Registry ---
-echo "🔑 Logging in to ${GHCR_HOSTNAME} as user '${GITHUB_USER}'..."
-# Use password-stdin for security
-echo "$GITHUB_PAT" | docker login "$GHCR_HOSTNAME" -u "$GITHUB_USER" --password-stdin || { echo "❌ Failed to log in to GHCR. Check username and PAT scopes."; exit 1; }
-echo "🔐 Login successful."
-
-# --- Push the images to GHCR ---
-echo "📤 Pushing Docker images to ${GHCR_HOSTNAME}..."
-
-echo "   Pushing ${GHCR_IMAGE_TAGGED}..."
-docker push "$GHCR_IMAGE_TAGGED" || { echo "❌ Failed to push tagged image."; exit 1; }
-
-echo "   Pushing ${GHCR_IMAGE_LATEST}..."
-docker push "$GHCR_IMAGE_LATEST" || { echo "❌ Failed to push latest image."; exit 1; }
+# --- Build and Push Multi-Platform Docker Image ---
+echo "🐳 Building and pushing multi-platform image to GHCR..."
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t "$GHCR_IMAGE_TAGGED" \
+  -t "$GHCR_IMAGE_LATEST" \
+  . --push || { echo "❌ Failed to build and push multi-platform image."; exit 1; }
 
 echo "✅ Docker images pushed successfully to GHCR!"
 echo "📌 Image tags available at ${GHCR_HOSTNAME}/${GITHUB_USER_OR_ORG}/${IMAGE_NAME}:"
